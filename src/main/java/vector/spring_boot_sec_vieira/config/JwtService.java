@@ -40,7 +40,7 @@ public class JwtService {
                 .parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
-                .parseClaimsJwt(jwt)
+                .parseClaimsJws(jwt)
                 .getBody();
     }
 
@@ -66,8 +66,8 @@ public class JwtService {
                 .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis()))
-                .signWith(SignatureAlgorithm.HS512, secretKey)
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
                 .compact();
     }
     public boolean isTokenValid(String token, UserDetails userDetails) {

@@ -13,6 +13,7 @@ import vector.spring_boot_sec_vieira.config.JwtService;
 import vector.spring_boot_sec_vieira.token.Token;
 import vector.spring_boot_sec_vieira.token.TokenRepository;
 import vector.spring_boot_sec_vieira.token.TokenType;
+import vector.spring_boot_sec_vieira.user.Role;
 import vector.spring_boot_sec_vieira.user.User;
 import org.springframework.http.HttpHeaders.*;
 import vector.spring_boot_sec_vieira.user.UserRepository;
@@ -31,12 +32,15 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
 
     public AuthenticationResponse register (RegisterRequest request) {
+        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new IllegalStateException("Email already taken: " + request.getEmail());
+        }
         var user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName((request.getLastName()))
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
-                .role(request.getRole())
+                .role(request.getRole() != null ? request.getRole() : Role.USER) // Default to USER
                 .build();
         var savedUser = userRepository.save(user);
         var token = jwtService.generateToken(user);
@@ -101,7 +105,7 @@ public class AuthenticationService {
             return;
         }
         refreshToken = authHeader.substring(7);
-        email = authHeader.substring(7);
+        email = jwtService.extractUsername(refreshToken);
         if(email != null) {
             var user = userRepository.findByEmail(email).orElse(null);
             if (jwtService.isTokenValid(refreshToken,user)) {
