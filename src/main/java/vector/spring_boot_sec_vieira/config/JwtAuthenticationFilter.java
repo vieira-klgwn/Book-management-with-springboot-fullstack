@@ -18,6 +18,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import vector.spring_boot_sec_vieira.token.TokenRepository;
 
 import java.io.IOException;
+
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -44,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
             var isTokenValid = tokenRepository.findByToken(jwt)
-                    .map(t -> !t.isExpired() && !t.isExpired())
+                    .map(t -> !t.isRevoked() && !t.isExpired())
                     .orElse(false);
             if(jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
